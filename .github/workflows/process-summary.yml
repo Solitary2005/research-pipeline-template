@@ -2,7 +2,7 @@ name: Process Summary Request
 
 on:
   issues:
-    types: [opened]
+    types: [labeled]
 
 jobs:
   process:
