@@ -1,0 +1,106 @@
+name: Process Summary Request
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  process:
+    if: github.event.label.name == 'summary-request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Parse arxiv_id from issue
+        id: parse
+        run: |
+          # Parse arxiv ID from issue body or title (format: YYMM.NNNNN)
+          # GitHub form templates use field labels as section headers in the body
+          # Try title first, then body for a 4-5 digit arxiv ID pattern
+          ARXIV_ID=$(echo "${{ github.event.issue.title }}" | grep -oP '\d{4}\.\d{4,5}' | head -1)
+          if [ -z "$ARXIV_ID" ]; then
+            ARXIV_ID=$(echo "${{ github.event.issue.body }}" | grep -oP '\d{4}\.\d{4,5}' | head -1)
+          fi
+          echo "arxiv_id=$ARXIV_ID" >> "$GITHUB_OUTPUT"
+          echo "Parsed arxiv_id: $ARXIV_ID"
+
+      - name: Validate arxiv_id
+        if: steps.parse.outputs.arxiv_id == ''
+        run: |
+          echo "Could not parse arxiv_id from issue. Please ensure the issue includes an arxiv ID."
+          exit 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: Check if already processed
+        id: check
+        run: |
+          if [ -f "_data/summaries/${{ steps.parse.outputs.arxiv_id }}.json" ]; then
+            echo "already_processed=true" >> "$GITHUB_OUTPUT"
+            echo "Already processed, will skip generation."
+          else
+            echo "already_processed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Process paper
+        if: steps.check.outputs.already_processed == 'false'
+        run: |
+          python scripts/process_paper.py \
+            --arxiv_id "${{ steps.parse.outputs.arxiv_id }}"
+        env:
+          # ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          LLM_BACKEND: "deepseek"
+
+      - name: Commit generated files
+        if: steps.check.outputs.already_processed == 'false'
+        run: |
+          git config user.name "research-pipeline-bot"
+          git config user.email "bot@research-pipeline.local"
+          git add _podcasts/ assets/audio/ _data/summaries/ data/papers_index.json _papers/
+          git commit -m "summary+podcast for ${{ steps.parse.outputs.arxiv_id }} [skip ci]" || true
+          git push || true
+
+      - name: Post result comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const id = '${{ steps.parse.outputs.arxiv_id }}';
+            const repo = context.repo;
+            const pagesBase = `https://${repo.owner}.github.io/${repo.repo}`;
+
+            const body = '${{ steps.check.outputs.already_processed }}' === 'true'
+              ? `This paper was already processed.\n- Summary: ${pagesBase}/podcasts/${id}/\n- Audio: ${pagesBase}/assets/audio/${id}.mp3`
+              : `Done! Here are the results:\n- Summary card + podcast: ${pagesBase}/podcasts/${id}/\n- Audio: ${pagesBase}/assets/audio/${id}.mp3\n\nHappy researching!`;
+
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body
+            });
+
+      - name: Close issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.update({
+              ...context.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
+            });

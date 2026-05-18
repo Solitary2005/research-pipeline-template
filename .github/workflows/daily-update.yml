@@ -1,0 +1,41 @@
+name: Daily Paper Update
+
+on:
+  schedule:
+    - cron: "0 13 * * *"   # 13:00 UTC, after Repo A updates at ~12:00
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch new abstracts from Repo A
+        run: python scripts/fetch_abstracts.py
+
+      - name: Generate Jekyll paper pages
+        run: python scripts/generate_pages.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "research-pipeline-bot"
+          git config user.email "bot@research-pipeline.local"
+          if ! git diff --quiet HEAD; then
+            git add _papers/ data/papers_index.json index.md
+            git commit -m "daily update: sync papers from arxiv [skip ci]"
+            git push
+          else
+            echo "No changes to commit."
+          fi

@@ -1,0 +1,34 @@
+name: Paper Summary Request
+description: Request an English summary card and Chinese podcast for a paper
+title: "[Summary] "
+labels: ["summary-request"]
+body:
+  - type: input
+    id: arxiv_id
+    attributes:
+      label: arXiv ID
+      description: The arXiv paper ID (e.g., 2605.15157)
+      placeholder: "2605.15157"
+    validations:
+      required: true
+  - type: input
+    id: paper_title
+    attributes:
+      label: Paper Title
+      description: Full title of the paper
+      placeholder: "Hand-in-the-Loop: Improving Dexterous Grasping..."
+  - type: dropdown
+    id: interest_level
+    attributes:
+      label: Interest Level
+      description: How relevant is this paper to your research?
+      options:
+        - "High — generate summary + podcast + archive"
+        - "Medium — generate summary only"
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes (optional)
+      description: Any specific aspects you'd like the summary to focus on?
