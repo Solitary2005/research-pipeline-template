@@ -8,7 +8,7 @@ class ConfigError(Exception):
 
 class Config:
     def __init__(self):
-        self.llm_backend = os.environ.get("LLM_BACKEND", "claude")
+        self.llm_backend = os.environ.get("LLM_BACKEND", "deepseek")
         self.tts_backend = os.environ.get("TTS_BACKEND", "edge")
 
         self.anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY", "")
@@ -17,7 +17,7 @@ class Config:
 
         self.repo_a_json_url = os.environ.get(
             "REPO_A_JSON_URL",
-            "https://raw.githubusercontent.com/Solitary2005/Dexterous-grasp-daily/main/Dexterous-grasp-arxiv-daily.json"
+            "https://cdn.jsdelivr.net/gh/Solitary2005/Dexterous-grasp-daily@main/Dexterous-grasp-arxiv-daily.json"
         )
 
         self.repo_name = os.environ.get("GITHUB_REPOSITORY", "Solitary2005/research_pipeline")
