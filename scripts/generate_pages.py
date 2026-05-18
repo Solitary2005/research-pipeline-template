@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from urllib.parse import quote
 
-from scripts.utils.config import config
+from utils.config import config
 
 
 def load_index():

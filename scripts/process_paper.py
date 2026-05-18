@@ -10,10 +10,10 @@ from pathlib import Path
 
 import requests
 
-from scripts.utils.config import config
-from scripts.utils.pdf_extractor import extract_text
-from scripts.utils.llm_client import LLMClient
-from scripts.utils.tts_client import TTSClient
+from utils.config import config
+from utils.pdf_extractor import extract_text
+from utils.llm_client import LLMClient
+from utils.tts_client import TTSClient
 
 
 def load_index():
