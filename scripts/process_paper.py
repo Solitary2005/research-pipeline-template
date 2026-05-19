@@ -119,7 +119,7 @@ permalink: /podcasts/{pid}/
 ### Takeaways
 {takeaways}
 
-[Back to paper page](/papers/{pid}/)
+[Back to paper page](/{config.repo_name.split('/')[-1]}/papers/{pid}/)
 """
 
     config.podcasts_dir.mkdir(parents=True, exist_ok=True)

@@ -66,7 +66,7 @@ def paper_body(paper):
   Your browser does not support audio.
 </audio>
 
-[View full summary + podcast page](/podcasts/{pid}/)
+[View full summary + podcast page](/{config.repo_name.split('/')[-1]}/podcasts/{pid}/)
 """
 
     return body
