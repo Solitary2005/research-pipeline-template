@@ -7,7 +7,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from scripts.utils.config import config
+from utils.config import config
 
 
 CUTOFF_DAYS = 7
