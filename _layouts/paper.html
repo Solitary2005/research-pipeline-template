@@ -33,4 +33,13 @@ layout: default
     </a>
   </div>
   {% endunless %}
+
+  {% if page.interesting %}
+  <div class="unmark-box">
+    <p>This paper is in your favorites.</p>
+    <a class="btn-unmark" href="https://github.com/{{ site.github.repository_nwo | default: "Solitary2005/research_pipeline" }}/issues/new?labels=unmark-request&template=unmark.yml&title=%5BUnmark%5D%20{{ page.arxiv_id }}&arxiv_id={{ page.arxiv_id }}&paper_title={{ page.title | url_encode }}" target="_blank">
+      Remove from Favorites
+    </a>
+  </div>
+  {% endif %}
 </article>

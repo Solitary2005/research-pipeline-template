@@ -3,6 +3,7 @@
 
 import json
 import sys
+from datetime import date
 from pathlib import Path
 from urllib.parse import quote
 
@@ -96,8 +97,20 @@ def generate_paper_pages(index):
 
 
 def generate_index_md(index):
+    today = date.today().isoformat()
+
+    new_papers_path = config.data_dir / "new_papers.txt"
+    if new_papers_path.exists():
+        with open(new_papers_path) as f:
+            new_ids = set(line.strip() for line in f if line.strip())
+        todays_papers = {
+            pid: index[pid] for pid in new_ids if pid in index
+        }
+    else:
+        todays_papers = {}
+
     sorted_papers = sorted(
-        index.items(),
+        todays_papers.items(),
         key=lambda x: x[1].get("published_date", ""),
         reverse=True,
     )
@@ -109,28 +122,32 @@ title: "Dexterous Grasp Daily"
 
 # Dexterous Grasp — Daily Paper Digest
 
-Papers updated daily from arXiv. Click a paper to read the abstract, or request an AI-generated summary + Chinese podcast.
+Papers updated daily from arXiv. Today's new papers are shown below. [📌 View favorites]({{ site.baseurl }}/favorites/) for archived papers.
 
 """
 
-    for paper_id, paper in sorted_papers:
-        title = paper.get("title", "Unknown")
-        date = paper.get("published_date", "")[:10]
-        first_author = paper.get("first_author", "Unknown")
-        abstract_preview = paper.get("abstract", "")[:300]
-        if len(paper.get("abstract", "")) > 300:
-            abstract_preview += "..."
+    if not sorted_papers:
+        content += f"""<p>No new papers found for {today}. Check back tomorrow, or browse <a href="{{{{ site.baseurl }}}}/favorites/">archived papers</a>.</p>
+"""
+    else:
+        for paper_id, paper in sorted_papers:
+            title = paper.get("title", "Unknown")
+            pub_date = paper.get("published_date", "")[:10]
+            first_author = paper.get("first_author", "Unknown")
+            abstract_preview = paper.get("abstract", "")[:300]
+            if len(paper.get("abstract", "")) > 300:
+                abstract_preview += "..."
 
-        badges = []
-        if paper.get("has_podcast"):
-            badges.append("🎧 Podcast")
-        if paper.get("interesting"):
-            badges.append("📌 Archived")
-        badge_str = " ".join(f"<span class=\"badge\">{b}</span>" for b in badges)
+            badges = []
+            if paper.get("has_podcast"):
+                badges.append("🎧 Podcast")
+            if paper.get("interesting"):
+                badges.append("📌 Archived")
+            badge_str = " ".join(f"<span class=\"badge\">{b}</span>" for b in badges)
 
-        content += f"""## [{title}]({{{{ site.baseurl }}}}/papers/{paper_id}/)
+            content += f"""## [{title}]({{{{ site.baseurl }}}}/papers/{paper_id}/)
 
-**{date}** · {first_author} et al. {badge_str}
+**{pub_date}** · {first_author} et al. {badge_str}
 
 {abstract_preview}
 
@@ -143,7 +160,7 @@ Papers updated daily from arXiv. Click a paper to read the abstract, or request 
     with open(config.data_dir.parent / "index.md", "w") as f:
         f.write(content)
 
-    print(f"[generate] Updated index.md with {len(sorted_papers)} papers.")
+    print(f"[generate] Updated index.md with {len(sorted_papers)} papers (today: {today}).")
 
 
 def main():
