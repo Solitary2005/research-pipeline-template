@@ -10,7 +10,7 @@ All 5 papers in the collection. [📌 View favorites]({{ site.baseurl }}/favorit
 
 ## [KaRMA: A Kinematic Metric for Fine Manipulation Ability in Robotic Hands]({{ site.baseurl }}/papers/2605.15548/)
 
-**2026-05-15** · Martin Peticco et.al. et al. 
+**2026-05-15** · Martin Peticco et.al. et al. <span class="badge">🎧 Podcast</span> <span class="badge">📌 Archived</span>
 
 [Abstract not available]
 
