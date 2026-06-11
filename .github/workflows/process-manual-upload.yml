@@ -66,6 +66,8 @@ jobs:
           pdf_field = get_field('PDF File')
           notes = get_field('Additional Notes (optional)')
 
+          print(f"DEBUG: Raw PDF field [{len(pdf_field)} chars]: {repr(pdf_field[:500])}")
+
           if not title:
               print("ERROR: Paper Title is required", file=sys.stderr)
               sys.exit(1)
@@ -84,13 +86,41 @@ jobs:
           if not published_date:
               published_date = today
 
-          # Extract PDF URL or filename
-          # Check for GitHub asset URL in the field
-          asset_match = re.search(r'https://github\.com/[^/]+/[^/]+/assets/\d+/[a-f0-9-]+', pdf_field)
-          filename_match = re.search(r'([\w\-\.]+\.pdf)', pdf_field)
+          # Extract PDF URL from the field
+          # GitHub issue attachments use either /files/ or /assets/ paths.
+          # Markdown link format: [filename](url) — extract the URL part.
+          pdf_url = ''
 
-          pdf_url = asset_match.group(0) if asset_match else ''
+          # Try markdown link first: [text](url)
+          md_link = re.search(r'\]\((\s*https://github\.com/[^)]+)\)', pdf_field)
+          if md_link:
+              pdf_url = md_link.group(1).strip()
+          else:
+              # Try bare URL patterns (files/ or assets/)
+              for pat in [
+                  r'https://github\.com/[^/\s]+/[^/\s]+/files/\d+/[^\s)]+',
+                  r'https://github\.com/[^/\s]+/[^/\s]+/assets/\d+/[a-f0-9-]+',
+                  r'https?://[^\s)]+\.pdf',
+              ]:
+                  m = re.search(pat, pdf_field)
+                  if m:
+                      pdf_url = m.group(0)
+                      break
+
+          # Extract bare filename as fallback
+          filename_match = re.search(r'([\w\-\.]+\.pdf)', pdf_field)
           pdf_filename = filename_match.group(1) if filename_match else ''
+
+          # If no URL but we have a markdown link with a bare filename (no http)
+          if not pdf_url and not pdf_filename:
+              bare_file = re.search(r'\]\(\s*(\w[\w\-\.]*\.pdf)\s*\)', pdf_field)
+              if bare_file:
+                  pdf_filename = bare_file.group(1)
+
+          print(f"Parsed paper: {paper_id}")
+          print(f"Title: {title}")
+          print(f"PDF URL: {pdf_url or 'none'}")
+          print(f"PDF filename: {pdf_filename or 'none'}")
 
           # Write metadata to GITHUB_OUTPUT
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
@@ -102,11 +132,7 @@ jobs:
               f.write(f"published_date={published_date}\n")
               f.write(f"pdf_url={pdf_url}\n")
               f.write(f"pdf_filename={pdf_filename}\n")
-
-          print(f"Parsed paper: {paper_id}")
-          print(f"Title: {title}")
-          print(f"PDF URL: {pdf_url or 'none'}")
-          print(f"PDF filename: {pdf_filename or 'none'}")
+              f.write(f"pdf_field<<EOF\n{pdf_field[:1000]}\nEOF\n")
 
       - name: Obtain PDF
         id: pdf
