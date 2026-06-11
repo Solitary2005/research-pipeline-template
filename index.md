@@ -5,7 +5,7 @@ title: "Dexterous Grasp Daily"
 
 # Dexterous Grasp — Daily Paper Digest
 
-All 5 papers in the collection. [📌 View favorites]({{ site.baseurl }}/favorites/) for archived papers.
+All 6 papers in the collection. [📌 View favorites]({{ site.baseurl }}/favorites/) for archived papers.
 
 
 ## [SynManDex: Synthesizing Human-like Dexterous Grasps from Synthetic Human Pre-Grasps]({{ site.baseurl }}/papers/2606.09798/)
@@ -55,6 +55,16 @@ Imitation learning has emerged as a powerful paradigm for robot skills learning.
 Controlling hands in high-dimensional action space has been a longstanding challenge, yet humans naturally perform dexterous tasks with ease. In this paper, we draw inspiration from the concept of internal model exhibited in human behavior and reconsider dexterous hands as learnable systems. Specifi...
 
 [Read more →]({{ site.baseurl }}/papers/manual-2026-06-11-modex-planning-highdimensional-dexterous/)
+
+---
+
+## [Visual-tactile Fusion for Transparent Object Grasping in Complex Backgrounds]({{ site.baseurl }}/papers/manual-2026-06-11-visualtactile-fusion-for-transparent-obj/)
+
+**2023-06-06** · Shoujie Li et al. <span class="badge">🎧 Podcast</span> <span class="badge">📌 Archived</span>
+
+The accurate detection and grasping of transparent objects are challenging but of significance to robots. Here, a visual-tactile fusion framework for transparent object grasping under complex backgrounds and variant light conditions is proposed, including the grasping position detection, tactile cal...
+
+[Read more →]({{ site.baseurl }}/papers/manual-2026-06-11-visualtactile-fusion-for-transparent-obj/)
 
 ---
 
