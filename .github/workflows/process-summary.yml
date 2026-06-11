@@ -18,12 +18,10 @@ jobs:
       - name: Parse arxiv_id from issue
         id: parse
         run: |
-          # Parse arxiv ID from issue body or title (format: YYMM.NNNNN)
-          # GitHub form templates use field labels as section headers in the body
-          # Try title first, then body for a 4-5 digit arxiv ID pattern
-          ARXIV_ID=$(echo "${{ github.event.issue.title }}" | grep -oP '\d{4}\.\d{4,5}' | head -1)
+          # Parse arxiv ID from issue body or title (format: YYMM.NNNNN or manual-YYYYMMDD-slug)
+          ARXIV_ID=$(echo "${{ github.event.issue.title }}" | grep -oP '\d{4}\.\d{4,5}|manual-\d{8}-[\w-]+' | head -1)
           if [ -z "$ARXIV_ID" ]; then
-            ARXIV_ID=$(echo "${{ github.event.issue.body }}" | grep -oP '\d{4}\.\d{4,5}' | head -1)
+            ARXIV_ID=$(echo "${{ github.event.issue.body }}" | grep -oP '\d{4}\.\d{4,5}|manual-\d{8}-[\w-]+' | head -1)
           fi
           echo "arxiv_id=$ARXIV_ID" >> "$GITHUB_OUTPUT"
           echo "Parsed arxiv_id: $ARXIV_ID"

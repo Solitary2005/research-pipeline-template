@@ -6,8 +6,8 @@ body:
   - type: input
     id: arxiv_id
     attributes:
-      label: arXiv ID
-      description: The arXiv paper ID to remove from favorites (e.g., 2605.15157)
+      label: Paper ID
+      description: The paper ID to remove from favorites (e.g., 2605.15157 or manual-20260611-title-slug)
       placeholder: "2605.15157"
     validations:
       required: true

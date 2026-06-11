@@ -6,6 +6,7 @@ Supports both arXiv papers (auto-download PDF) and manual uploads (local PDF + m
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from datetime import date
@@ -184,8 +185,34 @@ def main():
             }
             index[arxiv_id] = paper_info
             print(f"[process] Created manual paper entry for {arxiv_id}")
+        elif re.match(r'^\d{4}\.\d{4,5}$', arxiv_id):
+            # arXiv paper not yet in index: fetch metadata from arXiv API
+            print(f"[process] Paper {arxiv_id} not in index — fetching from arXiv API...")
+            from utils.arxiv_api import fetch_abstract, ArxivFetchError
+            try:
+                arxiv_data = fetch_abstract(arxiv_id)
+                paper_info = {
+                    "arxiv_id": arxiv_id,
+                    "title": arxiv_data.get("title") or args.title or "Unknown",
+                    "authors": arxiv_data.get("authors", ["Unknown"]),
+                    "first_author": arxiv_data.get("first_author", "Unknown"),
+                    "abstract": arxiv_data.get("abstract") or args.abstract or "",
+                    "published_date": arxiv_data.get("published_date") or args.published_date or "",
+                    "primary_category": arxiv_data.get("primary_category", ""),
+                    "pdf_url": arxiv_data.get("pdf_url", f"https://arxiv.org/pdf/{arxiv_id}.pdf"),
+                    "abs_url": arxiv_data.get("abs_url", f"https://arxiv.org/abs/{arxiv_id}"),
+                    "topic": "grasp",
+                    "interesting": True,
+                    "has_summary": False,
+                    "has_podcast": False,
+                }
+                index[arxiv_id] = paper_info
+                print(f"[process] Created entry from arXiv API for {arxiv_id}: {paper_info['title'][:80]}...")
+            except ArxivFetchError as e:
+                print(f"[process] Failed to fetch {arxiv_id} from arXiv: {e}", file=sys.stderr)
+                sys.exit(1)
         else:
-            print(f"[process] Paper {arxiv_id} not in index.", file=sys.stderr)
+            print(f"[process] Paper {arxiv_id} not in index and not a recognized format.", file=sys.stderr)
             sys.exit(1)
 
     paper_info = index[arxiv_id]

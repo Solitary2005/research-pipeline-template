@@ -18,9 +18,10 @@ jobs:
       - name: Parse arxiv_id from issue
         id: parse
         run: |
-          ARXIV_ID=$(echo "${{ github.event.issue.title }}" | grep -oP '\d{4}\.\d{4,5}' | head -1)
+          # Match arXiv IDs (e.g. 2606.09314) or manual upload IDs (e.g. manual-20260611-title-slug)
+          ARXIV_ID=$(echo "${{ github.event.issue.title }}" | grep -oP '\d{4}\.\d{4,5}|manual-\d{8}-[\w-]+' | head -1)
           if [ -z "$ARXIV_ID" ]; then
-            ARXIV_ID=$(echo "${{ github.event.issue.body }}" | grep -oP '\d{4}\.\d{4,5}' | head -1)
+            ARXIV_ID=$(echo "${{ github.event.issue.body }}" | grep -oP '\d{4}\.\d{4,5}|manual-\d{8}-[\w-]+' | head -1)
           fi
           echo "arxiv_id=$ARXIV_ID" >> "$GITHUB_OUTPUT"
           echo "Parsed arxiv_id: $ARXIV_ID"

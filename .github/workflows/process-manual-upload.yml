@@ -1,0 +1,197 @@
+name: Process Manual Paper Upload
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  process:
+    if: github.event.label.name == 'manual-upload'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+
+      - name: Parse issue body and prepare
+        id: prepare
+        shell: python
+        run: |
+          import os, re, json, sys, hashlib, datetime
+
+          body = r"""${{ github.event.issue.body }}"""
+
+          # Parse form sections from issue body
+          # Each section is: ### Field Name\n\nValue\n
+          sections = {}
+          current_key = None
+          current_value = []
+
+          for line in body.split('\n'):
+              m = re.match(r'^### (.+)$', line)
+              if m:
+                  if current_key:
+                      sections[current_key] = '\n'.join(current_value).strip()
+                  current_key = m.group(1).strip()
+                  current_value = []
+              else:
+                  current_value.append(line)
+
+          if current_key:
+              sections[current_key] = '\n'.join(current_value).strip()
+
+          def get_field(name):
+              return sections.get(name, '').strip()
+
+          title = get_field('Paper Title')
+          authors = get_field('Authors')
+          topic = get_field('Topic')
+          abstract = get_field('Abstract')
+          published_date = get_field('Published Date')
+          pdf_field = get_field('PDF File')
+          notes = get_field('Additional Notes (optional)')
+
+          if not title:
+              print("ERROR: Paper Title is required", file=sys.stderr)
+              sys.exit(1)
+          if not authors:
+              print("ERROR: Authors is required", file=sys.stderr)
+              sys.exit(1)
+
+          # Generate paper ID: manual-YYYYMMDD-{title_slug}
+          today = datetime.date.today().isoformat()
+          # Create slug from title: take first 5 meaningful words, lowercase, alphanumeric only
+          slug_words = re.sub(r'[^a-zA-Z0-9\s]', '', title.lower()).split()[:5]
+          title_slug = '-'.join(slug_words)[:40].strip('-')
+          paper_id = f"manual-{today}-{title_slug}"
+
+          # Use provided date or today
+          if not published_date:
+              published_date = today
+
+          # Extract PDF URL or filename
+          # Check for GitHub asset URL in the field
+          asset_match = re.search(r'https://github\.com/[^/]+/[^/]+/assets/\d+/[a-f0-9-]+', pdf_field)
+          filename_match = re.search(r'([\w\-\.]+\.pdf)', pdf_field)
+
+          pdf_url = asset_match.group(0) if asset_match else ''
+          pdf_filename = filename_match.group(1) if filename_match else ''
+
+          # Write metadata to GITHUB_OUTPUT
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"paper_id={paper_id}\n")
+              f.write(f"title<<EOF\n{title}\nEOF\n")
+              f.write(f"authors={authors}\n")
+              f.write(f"topic={topic}\n")
+              f.write(f"abstract<<EOF\n{abstract}\nEOF\n")
+              f.write(f"published_date={published_date}\n")
+              f.write(f"pdf_url={pdf_url}\n")
+              f.write(f"pdf_filename={pdf_filename}\n")
+
+          print(f"Parsed paper: {paper_id}")
+          print(f"Title: {title}")
+          print(f"PDF URL: {pdf_url or 'none'}")
+          print(f"PDF filename: {pdf_filename or 'none'}")
+
+      - name: Obtain PDF
+        id: pdf
+        run: |
+          mkdir -p _uploads /tmp
+
+          PDF_URL="${{ steps.prepare.outputs.pdf_url }}"
+          PDF_FILENAME="${{ steps.prepare.outputs.pdf_filename }}"
+
+          if [ -n "$PDF_URL" ]; then
+            echo "Downloading PDF from GitHub asset URL..."
+            curl -s -L \
+              -H "Authorization: Bearer ${{ github.token }}" \
+              -H "Accept: application/octet-stream" \
+              "$PDF_URL" -o /tmp/paper.pdf
+            echo "pdf_path=/tmp/paper.pdf" >> "$GITHUB_OUTPUT"
+          elif [ -n "$PDF_FILENAME" ] && [ -f "_uploads/$PDF_FILENAME" ]; then
+            echo "Using PDF from _uploads/ directory..."
+            echo "pdf_path=$(pwd)/_uploads/$PDF_FILENAME" >> "$GITHUB_OUTPUT"
+          else
+            echo "ERROR: No PDF found. Please attach a PDF file to the issue or place it in _uploads/."
+            echo "PDF field content: ${{ steps.prepare.outputs.pdf_field }}"
+            exit 1
+          fi
+
+      - name: Validate PDF
+        run: |
+          PDF_PATH="${{ steps.pdf.outputs.pdf_path }}"
+          if [ ! -f "$PDF_PATH" ] || [ ! -s "$PDF_PATH" ]; then
+            echo "ERROR: PDF file is missing or empty at $PDF_PATH"
+            exit 1
+          fi
+          echo "PDF file size: $(stat -c%s "$PDF_PATH") bytes"
+          # Basic check: first bytes should be %PDF
+          if ! head -c 4 "$PDF_PATH" | grep -q '%PDF'; then
+            echo "WARNING: File does not appear to be a valid PDF (no %PDF header)"
+          fi
+
+      - name: Process paper
+        id: process
+        run: |
+          python scripts/process_paper.py \
+            --arxiv_id "${{ steps.prepare.outputs.paper_id }}" \
+            --pdf_path "${{ steps.pdf.outputs.pdf_path }}" \
+            --no_download \
+            --title "${{ steps.prepare.outputs.title }}" \
+            --authors "${{ steps.prepare.outputs.authors }}" \
+            --abstract "${{ steps.prepare.outputs.abstract }}" \
+            --topic "${{ steps.prepare.outputs.topic }}" \
+            --published_date "${{ steps.prepare.outputs.published_date }}"
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          LLM_BACKEND: "deepseek"
+          TTS_BACKEND: "edge"
+
+      - name: Commit generated files
+        run: |
+          git config user.name "research-pipeline-bot"
+          git config user.email "bot@research-pipeline.local"
+          git add _podcasts/ assets/audio/ _data/summaries/ data/papers_index.json _papers/ index.md _uploads/
+          git commit -m "manual upload: ${{ steps.prepare.outputs.paper_id }} [skip ci]" || true
+          git push || true
+
+      - name: Post result comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const id = '${{ steps.prepare.outputs.paper_id }}';
+            const repo = context.repo;
+            const pagesBase = `https://${repo.owner}.github.io/${repo.repo}`;
+
+            const body = `✅ Manual upload processed!\n\n- 📄 Paper: ${pagesBase}/papers/${id}/\n- 📋 Summary + Podcast: ${pagesBase}/podcasts/${id}/\n- 🎧 Audio: ${pagesBase}/assets/audio/${id}.mp3\n- 📌 Added to Favorites: ${pagesBase}/favorites/\n\nHappy researching!`;
+
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body
+            });
+
+      - name: Close issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.update({
+              ...context.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
+            });
