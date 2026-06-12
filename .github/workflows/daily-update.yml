@@ -2,7 +2,7 @@ name: Daily Paper Update
 
 on:
   schedule:
-    - cron: "0 13 * * *"   # 13:00 UTC, after Repo A updates at ~12:00
+    - cron: "0 12 * * *"   # 12:00 UTC, matches original Dexterous-grasp-daily timing
   workflow_dispatch:
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Fetch new abstracts from Repo A
+      - name: Search arXiv for new papers
         run: python scripts/fetch_abstracts.py
 
       - name: Generate Jekyll paper pages
@@ -33,7 +33,7 @@ jobs:
           git config user.name "research-pipeline-bot"
           git config user.email "bot@research-pipeline.local"
           if ! git diff --quiet HEAD; then
-            git add _papers/ data/papers_index.json index.md
+            git add _papers/ data/papers_index.json index.md config/topics.yaml
             git commit -m "daily update: sync papers from arxiv [skip ci]"
             git push
           else

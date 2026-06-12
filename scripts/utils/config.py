@@ -15,6 +15,16 @@ class Config:
         self.openai_api_key = os.environ.get("OPENAI_API_KEY", "")
         self.deepseek_api_key = os.environ.get("DEEPSEEK_API_KEY", "")
 
+        # Path to the user-facing YAML topic configuration
+        self.topics_config_path = Path(
+            os.environ.get(
+                "TOPICS_CONFIG_PATH",
+                Path(__file__).resolve().parents[2] / "config" / "topics.yaml",
+            )
+        )
+
+        # DEPRECATED: no longer used by fetch_abstracts.py (now searches arXiv directly).
+        # Kept for backward compatibility with any scripts that may still reference it.
         self.repo_a_json_url = os.environ.get(
             "REPO_A_JSON_URL",
             "https://cdn.jsdelivr.net/gh/Solitary2005/Dexterous-grasp-daily@main/Dexterous-grasp-arxiv-daily.json"

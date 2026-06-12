@@ -1,115 +1,102 @@
 #!/usr/bin/env python3
-"""Download Repo A JSON, fetch arxiv abstracts for new papers, update papers_index.json."""
+"""Search arXiv for new papers matching configured topics, update papers_index.json.
 
-import json
+Replaces the old CDN-based flow (which downloaded JSON from Dexterous-grasp-daily).
+Now searches arXiv directly using the user-configurable topics in config/topics.yaml.
+"""
+
 import sys
 import time
-from pathlib import Path
 
-import requests
-
-from utils.arxiv_api import fetch_abstract, ArxivFetchError
+from search_arxiv.config_reader import ConfigReader, ConfigError
+from search_arxiv.search_engine import ArxivSearchEngine
+from search_arxiv.paper_filter import PaperFilter
+from search_arxiv.paper_accumulator import PaperAccumulator
 from utils.config import config
 
 
-def load_repo_a_papers():
-    print(f"[fetch] Downloading papers from {config.repo_a_json_url}")
-    resp = requests.get(config.repo_a_json_url, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
-
-    papers = {}
-    for topic, entries in data.items():
-        for paper_id, row in entries.items():
-            clean_id = paper_id.split("v")[0].strip()
-            papers[clean_id] = {
-                "topic": topic,
-                "raw_row": row,
-            }
-    print(f"[fetch] Found {len(papers)} papers in Repo A")
-    return papers
-
-
-def load_index():
-    if config.index_path.exists():
-        with open(config.index_path) as f:
-            return json.load(f)
-    return {}
-
-
-def save_index(index):
-    config.data_dir.mkdir(parents=True, exist_ok=True)
-    with open(config.index_path, "w") as f:
-        json.dump(index, f, ensure_ascii=False, indent=2)
-
-
-def parse_markdown_row(row):
-    parts = row.split("|")
-    if len(parts) >= 5:
-        date = parts[1].strip().strip("*")
-        title = parts[2].strip().strip("*")
-        authors = parts[3].strip()
-        return {"date": date, "title": title, "authors": authors}
-    return {}
-
-
 def main():
-    repo_papers = load_repo_a_papers()
-    index = load_index()
+    # 1. Load or create topic configuration
+    if not config.topics_config_path.exists():
+        print(f"[search] No topic config found at {config.topics_config_path}")
+        print(f"[search] Creating default config from template...")
+        pipeline_cfg = ConfigReader.create_default(config.topics_config_path)
+        print(f"[search] Created {config.topics_config_path}. Edit it to customize your topics.")
+        print(f"[search] Re-run to start searching with the default config.")
+    else:
+        try:
+            pipeline_cfg = ConfigReader.load(config.topics_config_path)
+        except ConfigError as e:
+            print(f"[search] ERROR: {e}", file=sys.stderr)
+            sys.exit(1)
 
-    new_count = 0
-    for paper_id, repo_info in repo_papers.items():
-        if paper_id in index and index[paper_id].get("abstract"):
-            continue
+    if not pipeline_cfg.topics:
+        print("[search] No topics configured. Add topics to config/topics.yaml and re-run.")
+        return
 
-        print(f"[fetch] New paper: {paper_id} — {repo_info.get('topic', '')}")
+    print(f"[search] Loaded {len(pipeline_cfg.topics)} topic(s) from {config.topics_config_path}")
 
-        parsed = parse_markdown_row(repo_info.get("raw_row", ""))
+    # 2. Load existing paper index
+    accumulator = PaperAccumulator(config.index_path)
+    known_ids = accumulator.known_ids()
+    print(f"[search] Existing index: {len(known_ids)} papers")
+
+    # 3. Search each topic
+    new_paper_ids = []
+    engine = ArxivSearchEngine()
+    total_raw = 0
+    total_filtered = 0
+
+    for i, topic_cfg in enumerate(pipeline_cfg.topics):
+        print(f"\n[search] Topic {i+1}/{len(pipeline_cfg.topics)}: {topic_cfg.display_name}")
+        print(f"[search]   Query: \"{topic_cfg.search_query}\", max_results={topic_cfg.max_results}")
+
+        if topic_cfg.abstract_contains:
+            print(f"[search]   Must contain ALL: {topic_cfg.abstract_contains}")
+        if topic_cfg.any_keyword:
+            print(f"[search]   Must contain ANY: {topic_cfg.any_keyword}")
 
         try:
-            arxiv_data = fetch_abstract(paper_id)
-            time.sleep(3)  # respect arxiv rate limit
-        except ArxivFetchError as e:
-            print(f"[fetch] WARNING: {e}", file=sys.stderr)
-            arxiv_data = {
-                "arxiv_id": paper_id,
-                "title": parsed.get("title", "Unknown"),
-                "abstract": "[Abstract not available]",
-                "published_date": parsed.get("date", ""),
-                "authors": [parsed.get("authors", "Unknown")],
-                "first_author": parsed.get("authors", "Unknown"),
-                "pdf_url": f"https://arxiv.org/pdf/{paper_id}.pdf",
-                "abs_url": f"https://arxiv.org/abs/{paper_id}",
-            }
+            raw_papers = engine.search(topic_cfg)
+        except Exception as e:
+            print(f"[search]   ERROR searching arXiv: {e}", file=sys.stderr)
+            continue
 
-        entry = {
-            "arxiv_id": paper_id,
-            "title": arxiv_data.get("title") or parsed.get("title", "Unknown"),
-            "abstract": arxiv_data.get("abstract", ""),
-            "published_date": arxiv_data.get("published_date") or parsed.get("date", ""),
-            "authors": arxiv_data.get("authors", [parsed.get("authors", "Unknown")]),
-            "first_author": arxiv_data.get("first_author") or parsed.get("authors", "Unknown"),
-            "primary_category": arxiv_data.get("primary_category", ""),
-            "pdf_url": arxiv_data.get("pdf_url", f"https://arxiv.org/pdf/{paper_id}.pdf"),
-            "abs_url": arxiv_data.get("abs_url", f"https://arxiv.org/abs/{paper_id}"),
-            "topic": repo_info.get("topic", ""),
-            "interesting": index.get(paper_id, {}).get("interesting", False),
-            "has_summary": index.get(paper_id, {}).get("has_summary", False),
-            "has_podcast": index.get(paper_id, {}).get("has_podcast", False),
-        }
+        total_raw += len(raw_papers)
+        filtered = [p for p in raw_papers if PaperFilter.passes(p, topic_cfg)]
+        total_filtered += len(filtered)
 
-        index[paper_id] = entry
-        new_count += 1
+        print(f"[search]   Fetched {len(raw_papers)} results, {len(filtered)} passed filter")
 
-    save_index(index)
-    print(f"[fetch] Added {new_count} new papers. Index has {len(index)} total.")
+        for paper in filtered:
+            if paper.arxiv_id in known_ids:
+                continue
 
-    new_ids = [pid for pid in repo_papers if pid not in load_index() or not load_index().get(pid, {}).get("abstract")]
+            accumulator.add_paper(paper)
+            known_ids.add(paper.arxiv_id)
+            new_paper_ids.append(paper.arxiv_id)
+            print(f"[search]   → NEW: {paper.arxiv_id} — {paper.title[:80]}")
+
+        # Brief pause between topics to be kind to arXiv
+        if i < len(pipeline_cfg.topics) - 1:
+            time.sleep(2)
+
+    # 4. Save updated index
+    accumulator.save()
+    print(f"\n[search] Summary: {total_raw} total fetched, {total_filtered} passed filter, "
+          f"{len(new_paper_ids)} new papers added.")
+    print(f"[search] Index now has {len(accumulator)} papers total.")
+
+    # 5. Write new_papers.txt for generate_pages.py
     new_ids_path = config.data_dir / "new_papers.txt"
+    config.data_dir.mkdir(parents=True, exist_ok=True)
     with open(new_ids_path, "w") as f:
-        for pid in new_ids:
-            if pid in index and index[pid].get("abstract"):
+        for pid in new_paper_ids:
+            if pid in accumulator:
                 f.write(f"{pid}\n")
+
+    if new_paper_ids:
+        print(f"[search] Wrote {len(new_paper_ids)} IDs to {new_ids_path}")
 
 
 if __name__ == "__main__":

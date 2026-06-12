@@ -1,0 +1,29 @@
+# =============================================================================
+# Research Pipeline — Topic Configuration
+# =============================================================================
+# Customize this file to control which arXiv papers are discovered.
+#
+# Each topic defines:
+#   - name:              Internal identifier (use snake_case, no spaces)
+#   - display_name:      Human-readable name shown on the website
+#   - search_query:      arXiv API search string (supports full query syntax:
+#                         boolean operators, category filters like cat:cs.RO, etc.)
+#   - max_results:       Max papers to fetch per run (1–100; default 20)
+#   - abstract_contains: ALL of these strings must appear in the abstract
+#                         (case-insensitive). Set to [] to disable.
+#   - any_keyword:       AT LEAST ONE of these strings must appear in the
+#                         abstract (case-insensitive). Set to [] to disable.
+#
+# To add your own research area, append a new entry to the 'topics' list.
+# =============================================================================
+
+topics:
+  - name: "dexterous_grasp"
+    display_name: "Dexterous Grasp"
+    search_query: "grasp"
+    max_results: 20
+    abstract_contains:
+      - "grasp"
+    any_keyword:
+      - "dexterous"
+      - "dex"

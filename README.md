@@ -1,12 +1,49 @@
 # Research Pipeline — Paper Digest + AI Podcast
 
-Daily paper tracking for dexterous grasping research, with AI-generated summaries and Chinese podcasts.
+Track arXiv papers by your own keywords, with AI-generated summaries and Chinese podcasts.
 
 ## User Guide
 
+### 0. Customize Your Research Topics
+
+Edit `config/topics.yaml` to control which papers the pipeline discovers. Add your own topics, keywords, and filters — no Python editing needed:
+
+```yaml
+topics:
+  - name: "dexterous_grasp"
+    display_name: "Dexterous Grasp"
+    search_query: "grasp"
+    max_results: 20
+    abstract_contains:
+      - "grasp"
+    any_keyword:
+      - "dexterous"
+      - "dex"
+
+  - name: "robot_learning"
+    display_name: "Robot Learning"
+    search_query: "cat:cs.RO robot learning"
+    max_results: 15
+    abstract_contains: []
+    any_keyword:
+      - "reinforcement learning"
+      - "imitation learning"
+      - "policy"
+```
+
+**Configuration fields per topic:**
+| Field | Description |
+|-------|-------------|
+| `name` | Internal identifier (snake_case) |
+| `display_name` | Human-readable label shown on the website |
+| `search_query` | arXiv API query (supports boolean ops, category filters like `cat:cs.RO`) |
+| `max_results` | Papers to fetch per run (1–100, default 20) |
+| `abstract_contains` | ALL keywords must appear in abstract (case-insensitive). Empty = disabled. |
+| `any_keyword` | AT LEAST ONE keyword must appear in abstract (case-insensitive). Empty = disabled. |
+
 ### 1. Browse Papers
 
-Visit the [GitHub Pages site](https://solitary2005.github.io/research_pipeline/) to browse daily arXiv papers. The system updates automatically each day.
+Visit the [GitHub Pages site](https://solitary2005.github.io/research_pipeline/) to browse daily arXiv papers. The system searches arXiv directly and updates each day at 12:00 UTC.
 
 ### 2. Request Summary + Podcast (arXiv papers)
 
@@ -61,11 +98,16 @@ Enable Pages in repo Settings → Pages:
 - Source: Deploy from a branch
 - Branch: `main`, folder: `/ (root)`
 
+### Topic Configuration
+
+Paper discovery is controlled by `config/topics.yaml`. See [Section 0](#0-customize-your-research-topics) above for the full format. You can override the config path via the `TOPICS_CONFIG_PATH` environment variable.
+
 ### Backend Configuration
 
 Set environment variables in workflow files:
 - `LLM_BACKEND=claude|openai|deepseek` (default: `deepseek`)
 - `TTS_BACKEND=edge|openai` (default: `edge`)
+- `TOPICS_CONFIG_PATH` (optional) — override path to topic YAML config
 
 </details>
 
