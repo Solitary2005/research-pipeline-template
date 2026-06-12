@@ -76,7 +76,7 @@ jobs:
               sys.exit(1)
 
           # Generate paper ID: manual-YYYYMMDD-{title_slug}
-          today = datetime.date.today().isoformat()
+          today = datetime.date.today().strftime('%Y%m%d')
           # Create slug from title: take first 5 meaningful words, lowercase, alphanumeric only
           slug_words = re.sub(r'[^a-zA-Z0-9\s]', '', title.lower()).split()[:5]
           title_slug = '-'.join(slug_words)[:40].strip('-')

@@ -191,7 +191,7 @@ def main():
             }
             index[arxiv_id] = paper_info
             print(f"[process] Created manual paper entry for {arxiv_id}")
-        elif re.match(r'^\d{4}\.\d{4,5}$', arxiv_id) or re.match(r'^manual-\d{8}-[\w-]+$', arxiv_id):
+        elif re.match(r'^\d{4}\.\d{4,5}$', arxiv_id) or re.match(r'^manual-(\d{8}|\d{4}-\d{2}-\d{2})(-[\w-]*)?$', arxiv_id):
             # arXiv paper not yet in index: fetch metadata from arXiv API
             print(f"[process] Paper {arxiv_id} not in index — fetching from arXiv API...")
             from utils.arxiv_api import fetch_abstract, ArxivFetchError

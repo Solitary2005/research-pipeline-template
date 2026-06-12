@@ -19,9 +19,9 @@ jobs:
         id: parse
         run: |
           # Match arXiv IDs (e.g. 2606.09314) or manual upload IDs (e.g. manual-20260611-title-slug)
-          PAPER_ID=$(echo "${{ github.event.issue.title }}" | grep -oP '\d{4}\.\d{4,5}|manual-\d{8}[-a-zA-Z0-9]*' | head -1)
+          PAPER_ID=$(echo "${{ github.event.issue.title }}" | grep -oP '\d{4}\.\d{4,5}|manual-\d{4}-?\d{2}-?\d{2}[-a-zA-Z0-9]*' | head -1)
           if [ -z "$PAPER_ID" ]; then
-            PAPER_ID=$(echo "${{ github.event.issue.body }}" | grep -oP '\d{4}\.\d{4,5}|manual-\d{8}[-a-zA-Z0-9]*' | head -1)
+            PAPER_ID=$(echo "${{ github.event.issue.body }}" | grep -oP '\d{4}\.\d{4,5}|manual-\d{4}-?\d{2}-?\d{2}[-a-zA-Z0-9]*' | head -1)
           fi
           echo "paper_id=$PAPER_ID" >> "$GITHUB_OUTPUT"
           echo "Parsed paper_id: $PAPER_ID"
