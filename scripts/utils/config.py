@@ -108,12 +108,7 @@ class Config:
         self.deepseek_api_key = os.environ.get("DEEPSEEK_API_KEY", "")
 
         # ---- Repo / paths ----
-        # DEPRECATED: no longer used by fetch_abstracts.py (now searches arXiv directly).
-        self.repo_a_json_url = os.environ.get(
-            "REPO_A_JSON_URL",
-            "https://cdn.jsdelivr.net/gh/Solitary2005/Dexterous-grasp-daily@main/Dexterous-grasp-arxiv-daily.json"
-        )
-        self.repo_name = os.environ.get("GITHUB_REPOSITORY", "Solitary2005/research_pipeline")
+        self.repo_name = os.environ.get("GITHUB_REPOSITORY", "YOUR_USERNAME/YOUR_REPO_NAME")
 
         self.papers_dir = base / "_papers"
         self.podcasts_dir = base / "_podcasts"

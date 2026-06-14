@@ -73,11 +73,11 @@ def paper_body(paper):
 ---
 
 <audio controls style="width:100%">
-  <source src="/{config.repo_name.split('/')[-1]}/assets/audio/{pid}.mp3" type="audio/mpeg">
+  <source src="{config.site_baseurl}/assets/audio/{pid}.mp3" type="audio/mpeg">
   Your browser does not support audio.
 </audio>
 
-[View full summary + podcast page](/{config.repo_name.split('/')[-1]}/podcasts/{pid}/)
+[View full summary + podcast page]({config.site_baseurl}/podcasts/{pid}/)
 """
 
     return body
@@ -133,12 +133,13 @@ def generate_index_md(index):
     else:
         intro = f"All {len(sorted_papers)} papers in the collection. [📌 View favorites]({{{{ site.baseurl }}}}/favorites/) for archived papers.\n\n"
 
+    site_title = config.site_title
     content = f"""---
 layout: default
-title: "Dexterous Grasp Daily"
+title: "{site_title}"
 ---
 
-# Dexterous Grasp — Daily Paper Digest
+# {site_title} — Daily Paper Digest
 
 {intro}
 """

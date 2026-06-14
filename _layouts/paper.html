@@ -28,7 +28,7 @@ layout: default
   {% unless page.has_podcast %}
   <div class="request-box">
     <p>Interested in this paper? Get an AI-generated summary card and Chinese podcast.</p>
-    <a class="btn-request" href="https://github.com/{{ site.github.repository_nwo | default: "Solitary2005/research_pipeline" }}/issues/new?labels=summary-request&template=summary-request.yml&title=%5BSummary%5D%20{{ page.arxiv_id }}&arxiv_id={{ page.arxiv_id }}&paper_title={{ page.title | url_encode }}" target="_blank">
+    <a class="btn-request" href="https://github.com/{{ site.github.repository_nwo | default: "YOUR_USERNAME/YOUR_REPO_NAME" }}/issues/new?labels=summary-request&template=summary-request.yml&title=%5BSummary%5D%20{{ page.arxiv_id }}&arxiv_id={{ page.arxiv_id }}&paper_title={{ page.title | url_encode }}" target="_blank">
       Request Summary + Podcast
     </a>
   </div>
@@ -37,7 +37,7 @@ layout: default
   {% if page.interesting %}
   <div class="unmark-box">
     <p>This paper is in your favorites.</p>
-    <a class="btn-unmark" href="https://github.com/{{ site.github.repository_nwo | default: "Solitary2005/research_pipeline" }}/issues/new?labels=unmark-request&template=unmark.yml&title=%5BUnmark%5D%20{{ page.arxiv_id }}&arxiv_id={{ page.arxiv_id }}&paper_title={{ page.title | url_encode }}" target="_blank">
+    <a class="btn-unmark" href="https://github.com/{{ site.github.repository_nwo | default: "YOUR_USERNAME/YOUR_REPO_NAME" }}/issues/new?labels=unmark-request&template=unmark.yml&title=%5BUnmark%5D%20{{ page.arxiv_id }}&arxiv_id={{ page.arxiv_id }}&paper_title={{ page.title | url_encode }}" target="_blank">
       Remove from Favorites
     </a>
   </div>

@@ -1,151 +1,175 @@
 # Research Pipeline — Paper Digest + AI Podcast
 
-Track arXiv papers by your own keywords, with AI-generated summaries and Chinese podcasts.
+Track arXiv papers by your keywords, with AI-generated summaries and Chinese podcasts. Built on GitHub Pages + Actions.
 
-## User Guide
+## Quick Start
 
-### 0. First-Time Setup — Edit ONE File
+### 1. Use this template
 
-After forking the repo, open **`config/settings.yaml`** and set your GitHub Pages URL and preferred backends:
+Click the green **"Use this template"** button → **"Create a new repository"**. Choose a repository name (e.g., `my-research-digest`).
 
-```yaml
-# config/settings.yaml — ALL user settings in one place
-site:
-  title: "My Research Digest"                         # your site title
-  url: "https://YOUR_USERNAME.github.io"              # your GitHub Pages URL
-  baseurl: "/YOUR_REPO_NAME"                          # your repo name
+### 2. Configure your site
 
-llm:
-  backend: "deepseek"     # claude | openai | deepseek
+Copy the example configs to real ones:
 
-tts:
-  backend: "edge"         # edge | openai
+```bash
+cp config/settings.example.yaml config/settings.yaml
+cp config/topics.example.yaml config/topics.yaml
 ```
 
-The pipeline auto-syncs `_config.yml` from this file — you never need to edit `_config.yml` directly.
+Edit **`config/settings.yaml`** — set your GitHub username and repo name:
 
-Then edit **`config/topics.yaml`** to customize which papers are tracked:
+```yaml
+site:
+  title: "My Research Digest"
+  url: "https://YOUR_USERNAME.github.io"
+  baseurl: "/YOUR_REPO_NAME"        # your repo name, with leading /
+```
+
+Edit **`config/topics.yaml`** — define your arXiv search topics:
 
 ```yaml
 topics:
-  - name: "dexterous_grasp"
-    display_name: "Dexterous Grasp"
-    search_query: "grasp"
+  - name: "my_topic"
+    display_name: "My Topic"
+    search_query: "machine learning"    # arXiv search query
     max_results: 20
-    abstract_contains:
-      - "grasp"
-    any_keyword:
-      - "dexterous"
-      - "dex"
-
-  - name: "robot_learning"
-    display_name: "Robot Learning"
-    search_query: "cat:cs.RO robot learning"
-    max_results: 15
-    abstract_contains: []
-    any_keyword:
-      - "reinforcement learning"
-      - "imitation learning"
-      - "policy"
+    abstract_contains: []               # ALL keywords must be in abstract
+    any_keyword:                        # AT LEAST ONE keyword must be in abstract
+      - "deep learning"
+      - "transformer"
 ```
 
-**Topic configuration fields:**
-| Field | Description |
-|-------|-------------|
-| `name` | Internal identifier (snake_case) |
-| `display_name` | Human-readable label shown on the website |
-| `search_query` | arXiv API query (supports boolean ops, category filters like `cat:cs.RO`) |
-| `max_results` | Papers to fetch per run (1–100, default 20) |
-| `abstract_contains` | ALL keywords must appear in abstract (case-insensitive). Empty = disabled. |
-| `any_keyword` | AT LEAST ONE keyword must appear in abstract (case-insensitive). Empty = disabled. |
+### 3. Enable GitHub Pages
 
-### 1. Browse Papers
+Go to your repo on GitHub: **Settings → Pages**:
+- Source: **Deploy from a branch**
+- Branch: `main`, folder: `/ (root)`
+- Click **Save**
 
-Visit the [GitHub Pages site](https://solitary2005.github.io/research_pipeline/) to browse daily arXiv papers. The system searches arXiv directly and updates each day at 12:00 UTC.
+### 4. Add API key secret
 
-### 2. Request Summary + Podcast (arXiv papers)
-
-On any paper's detail page, click **"Request Summary + Podcast"**. This opens a GitHub Issue — submit it and the workflow will:
-- Download the PDF from arXiv
-- Generate an English summary card
-- Generate a Chinese podcast script (~15-30 min)
-- Produce an MP3 audio file
-- Add the paper to your Favorites
-
-The result appears on the paper's podcast page within a few minutes.
-
-### 3. Manually Upload a Paper
-
-Have your own PDF? Use the **Manual Upload** feature:
-
-1. Go to Issues → New Issue → **"Manual Paper Upload"**
-2. Fill in the paper title, authors, and topic
-3. **Drag and drop your PDF** into the form (or place it in `_uploads/` and reference its filename)
-4. Submit the issue
-
-The workflow automatically generates the summary card, podcast, and adds the paper to your Favorites — no separate "Request" step needed.
-
-### 4. Listen to Podcasts
-
-Each processed paper gets a dedicated podcast page with an embedded audio player. You can also browse all archived papers on the [Favorites page](https://solitary2005.github.io/research_pipeline/favorites/).
-
-### 5. Remove from Favorites
-
-On any favorited paper's page, click **"Remove from Favorites"**. This opens an issue — submit it to remove the paper from your collection (summary, podcast, and audio files will be cleaned up).
-
-### 6. Cleanup
-
-Papers that haven't been requested for summary/podcast are automatically removed after 7 days. Favorited papers are kept permanently.
-
----
-
-<details>
-<summary>📋 Setup & Configuration</summary>
-
-### GitHub Secrets
+Go to **Settings → Secrets and variables → Actions** and add:
 
 | Secret | Required | Purpose |
 |--------|----------|---------|
-| `ANTHROPIC_API_KEY` | Optional | Claude API for summaries and podcasts |
-| `OPENAI_API_KEY` | Optional | OpenAI GPT / TTS |
-| `DEEPSEEK_API_KEY` | Yes (default) | DeepSeek as LLM backend |
+| `DEEPSEEK_API_KEY` | Yes (default) | DeepSeek API for summaries & podcasts |
 
-### GitHub Pages
+Optional: `ANTHROPIC_API_KEY` (Claude) or `OPENAI_API_KEY` (GPT + TTS).
 
-Enable Pages in repo Settings → Pages:
-- Source: Deploy from a branch
-- Branch: `main`, folder: `/ (root)`
+### 5. Run the first update
 
-### All User Configuration
+Go to **Actions → Daily Paper Update → Run workflow**.
 
-Everything you need to customize is in two files under `config/`:
-
-| File | What it controls |
-|------|-----------------|
-| `config/settings.yaml` | Site URL, title, LLM backend, TTS backend |
-| `config/topics.yaml` | arXiv search queries, keywords, filters |
-
-See [Section 0](#0-first-time-setup--edit-one-file) above for the full format. You can override either file's path via environment variables:
-- `SETTINGS_CONFIG_PATH` — path to `settings.yaml`
-- `TOPICS_CONFIG_PATH` — path to `topics.yaml`
-
-Backend settings can also be overridden by environment variables (`LLM_BACKEND`, `TTS_BACKEND`) — useful for CI without editing files.
-
-</details>
+Your site will be live at `https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/` within a minute.
 
 ---
 
-<details>
-<summary>📝 Changelog</summary>
+## How It Works
 
-Full release notes are published on the [GitHub Releases](https://github.com/Solitary2005/research_pipeline/releases) page.
+```
+arXiv API                    GitHub Actions (daily / on-demand)
+    │                              │
+    ▼                              ▼
+┌─────────────┐    ┌──────────────────────────────┐
+│ fetch new   │───▶│ scripts/fetch_abstracts.py    │──▶ data/papers_index.json
+│ papers      │    │ scripts/generate_pages.py     │──▶ _papers/*.md + index.md
+└─────────────┘    │ scripts/process_paper.py      │──▶ summary + MP3 podcast
+                   └──────────────────────────────┘
+                              │
+                              ▼
+                   GitHub Pages (Jekyll)
+                   https://<you>.github.io/<repo>/
+```
 
-**Latest — Manual Paper Upload (2026-06-11)**
-- New Issue template for manual PDF uploads (drag & drop)
-- Uploaded papers go directly to Favorites + auto-generate summary card & podcast
-- Supports non-arXiv papers with user-provided metadata
-- Unmark workflow updated to support both arXiv IDs and manual paper IDs
+- **Daily update** (12:00 UTC): searches arXiv for your topics, publishes new papers
+- **Summary + Podcast**: request from any paper page — opens a GitHub Issue, workflow generates English summary + Chinese podcast (~15-30 min MP3)
+- **Manual Upload**: for non-arXiv papers — drag & drop PDF into an issue form
+- **Cleanup**: papers older than 7 days without summaries are auto-removed
 
-[View all releases →](https://github.com/Solitary2005/research_pipeline/releases)
+---
 
-</details>
+## Configuration Reference
+
+### `config/settings.yaml`
+
+| Field | Description | Default |
+|-------|-------------|---------|
+| `site.title` | Site title shown in header | `"Research Paper Digest"` |
+| `site.url` | Full GitHub Pages URL | `https://YOUR_USERNAME.github.io` |
+| `site.baseurl` | Repo path prefix | `"/YOUR_REPO_NAME"` |
+| `llm.backend` | LLM for summaries: `deepseek`, `claude`, or `openai` | `deepseek` |
+| `tts.backend` | TTS for audio: `edge` or `openai` | `edge` |
+
+### `config/topics.yaml`
+
+| Field | Description |
+|-------|-------------|
+| `name` | Internal ID (snake_case) |
+| `display_name` | Label shown on the website |
+| `search_query` | arXiv query string (supports `cat:cs.RO`, boolean ops) |
+| `max_results` | Papers per run (1–100) |
+| `abstract_contains` | ALL keywords must appear in abstract. Empty = no filter |
+| `any_keyword` | AT LEAST ONE keyword must appear. Empty = no filter |
+
+### Environment variable overrides
+
+| Variable | Overrides |
+|----------|-----------|
+| `LLM_BACKEND` | `config/settings.yaml` → `llm.backend` |
+| `TTS_BACKEND` | `config/settings.yaml` → `tts.backend` |
+| `SETTINGS_CONFIG_PATH` | Path to `settings.yaml` |
+| `TOPICS_CONFIG_PATH` | Path to `topics.yaml` |
+
+---
+
+## Staying Up to Date
+
+This repo is a **template** — your fork is independent, but you can pull upstream improvements (bug fixes, new features) manually:
+
+```bash
+# One-time setup
+git remote add upstream https://github.com/Solitary2005/research-pipeline-template.git
+
+# Pull updates when available
+git fetch upstream
+git merge upstream/main
+```
+
+Your `config/settings.yaml` and `config/topics.yaml` will **never** conflict during merge — the template doesn't include them. Generated content (`_papers/`, `_podcasts/`, etc.) is also excluded from the template, so those won't conflict either.
+
+If `.gitignore` or `README.md` conflict during merge, accept the upstream version, then re-apply your local changes.
+
+---
+
+## Directory Structure
+
+```
+your-fork/
+├── config/
+│   ├── settings.yaml          ← YOU EDIT: site + backend config
+│   ├── topics.yaml            ← YOU EDIT: arXiv search topics
+│   ├── settings.example.yaml  ← template reference (gitignored in user repo)
+│   └── topics.example.yaml    ← template reference (gitignored in user repo)
+├── scripts/                   ← Pipeline code (pull upstream updates)
+├── .github/workflows/         ← CI workflows (pull upstream updates)
+├── _layouts/                  ← Jekyll page layouts
+├── _includes/                 ← Jekyll partials
+├── _papers/                   ← Generated paper pages (auto, committed by CI)
+├── _podcasts/                 ← Generated podcast pages (auto, committed by CI)
+├── _data/summaries/           ← Generated summary JSON (auto, committed by CI)
+├── assets/
+│   ├── css/style.scss         ← Site styles
+│   └── audio/                 ← Generated MP3 files (auto, committed by CI)
+├── data/
+│   └── papers_index.json      ← Paper metadata index (auto, committed by CI)
+├── index.md                   ← Landing page (auto-generated)
+├── favorites.md               ← Favorites index page
+└── _config.yml                ← Jekyll config (auto-synced from settings.yaml)
+```
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).

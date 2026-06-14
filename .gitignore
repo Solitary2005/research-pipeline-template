@@ -1,0 +1,27 @@
+# User configuration files (template provides .example.yaml copies)
+/config/settings.yaml
+/config/topics.yaml
+
+# Auto-generated Jekyll config (regenerated from config/settings.yaml)
+/_config.yml
+
+# Generated content directories (empty in template; populated in user repos)
+/_papers/*
+!/_papers/.gitkeep
+/_podcasts/*
+!/_podcasts/.gitkeep
+/assets/audio/*
+!/assets/audio/.gitkeep
+/_data/summaries/*
+!/_data/summaries/.gitkeep
+/data/papers_index.json
+/data/pdfs/
+/index.md
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db

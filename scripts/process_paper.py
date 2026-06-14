@@ -114,7 +114,7 @@ permalink: /podcasts/{pid}/
 ---
 
 <audio controls style="width:100%;margin-bottom:2em;">
-  <source src="/{config.repo_name.split('/')[-1]}/assets/audio/{pid}.mp3" type="audio/mpeg">
+  <source src="{config.site_baseurl}/assets/audio/{pid}.mp3" type="audio/mpeg">
   Your browser does not support audio.
 </audio>
 
@@ -136,7 +136,7 @@ permalink: /podcasts/{pid}/
 ### Takeaways
 {takeaways}
 
-[Back to paper page](/{config.repo_name.split('/')[-1]}/papers/{pid}/)
+[Back to paper page]({config.site_baseurl}/papers/{pid}/)
 """
 
     config.podcasts_dir.mkdir(parents=True, exist_ok=True)
