@@ -40,14 +40,38 @@ topics:
       - "transformer"
 ```
 
-### 3. Enable GitHub Pages
+### 3. Edit `.gitignore` for your fork
+
+The template's `.gitignore` includes rules that prevent generated content from being committed — these are only needed in the template repo itself. **Delete the entire "TEMPLATE-ONLY RULES" section** (everything between the `=====` markers at the top of `.gitignore`). Keep the "SHARED RULES" section.
+
+After editing, your `.gitignore` should look roughly like:
+
+```gitignore
+# =============================================================================
+# SHARED RULES — KEEP THESE
+# =============================================================================
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db
+
+# (Add your own rules below if needed)
+```
+
+> Skipping this step will prevent the CI workflow from committing summary, podcast, and audio files.
+
+### 4. Enable GitHub Pages
 
 Go to your repo on GitHub: **Settings → Pages**:
 - Source: **Deploy from a branch**
 - Branch: `main`, folder: `/ (root)`
 - Click **Save**
 
-### 4. Add API key secret
+### 5. Add API key secret
 
 Go to **Settings → Secrets and variables → Actions** and add:
 
@@ -57,7 +81,7 @@ Go to **Settings → Secrets and variables → Actions** and add:
 
 Optional: `ANTHROPIC_API_KEY` (Claude) or `OPENAI_API_KEY` (GPT + TTS).
 
-### 5. Run the first update
+### 6. Run the first update
 
 Go to **Actions → Daily Paper Update → Run workflow**.
 
@@ -141,20 +165,53 @@ Override them under `llm.model` in settings.yaml (see `config/settings.example.y
 
 ## Staying Up to Date
 
-This repo is a **template** — your fork is independent, but you can pull upstream improvements (bug fixes, new features) manually:
+This repo is a **GitHub template** — your fork is independent, but you can pull upstream improvements manually.
+
+### One-time setup (do this right after forking)
+
+In your fork, add the upstream remote:
 
 ```bash
-# One-time setup
 git remote add upstream https://github.com/Solitary2005/research-pipeline-template.git
+git fetch upstream
+```
 
-# Pull updates when available
+### Pulling updates
+
+```bash
 git fetch upstream
 git merge upstream/main
 ```
 
-Your `config/settings.yaml` and `config/topics.yaml` will **never** conflict during merge — the template doesn't include them. Generated content (`_papers/`, `_podcasts/`, etc.) is also excluded from the template, so those won't conflict either.
+### What merges cleanly (no conflicts, ever)
 
-If `.gitignore` or `README.md` conflict during merge, accept the upstream version, then re-apply your local changes.
+| Files | Why |
+|-------|-----|
+| `scripts/`, `.github/workflows/` | Template changes code; you don't touch code |
+| `_layouts/`, `_includes/`, `assets/css/` | Same reason |
+| `config/settings.yaml`, `config/topics.yaml` | Template doesn't track them (gitignored) |
+| `_papers/`, `_podcasts/`, `assets/audio/`, `_data/` | Template doesn't track them |
+| `config/settings.example.yaml`, `config/topics.example.yaml` | Ignored by your `.gitignore` |
+
+### What may need manual attention
+
+| File | How often | What to do |
+|------|-----------|------------|
+| `.gitignore` | Rare (only if upstream adds new ignore rules) | Keep your version (`git checkout --ours .gitignore`). If upstream added a new shared rule (in the SHARED RULES section), copy only that line to your version. |
+| `README.md` | Occasional | If you customized your README, resolve manually. Otherwise accept upstream's. |
+
+### After-merge checklist
+
+1. Check that **GitHub Actions** workflows still run (Actions tab in your repo)
+2. Trigger a manual **Daily Paper Update** run to verify the pipeline works
+3. Verify your **GitHub Pages** site loads correctly
+
+### Wall-chart summary
+
+```
+fork once → edit .gitignore/config → done
+merge upstream → resolve .gitignore (rare) → check CI → done
+```
 
 ---
 

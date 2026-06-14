@@ -1,11 +1,24 @@
-# User configuration files (template provides .example.yaml copies)
+# =============================================================================
+# TEMPLATE-ONLY RULES — REMOVE AFTER FORKING
+# =============================================================================
+# The rules below keep the template repository clean by ignoring user config
+# and generated content. In YOUR fork, generated content is committed by CI
+# and user config IS the site — so you want these files TRACKED, not ignored.
+#
+# After using "Use this template":
+#   1. DELETE this entire section (lines between the ===== markers)
+#   2. KEEP the SHARED RULES section below
+#   3. Add your own user-specific rules at the bottom (optional)
+# =============================================================================
+
+# User config (forkers: use settings.example.yaml → settings.yaml instead)
 /config/settings.yaml
 /config/topics.yaml
 
-# Auto-generated Jekyll config (regenerated from config/settings.yaml)
+# Auto-generated Jekyll config
 /_config.yml
 
-# Generated content directories (empty in template; populated in user repos)
+# Generated content
 /_papers/*
 !/_papers/.gitkeep
 /_podcasts/*
@@ -17,6 +30,10 @@
 /data/papers_index.json
 /data/pdfs/
 /index.md
+
+# =============================================================================
+# SHARED RULES — KEEP THESE
+# =============================================================================
 
 # Python
 __pycache__/
