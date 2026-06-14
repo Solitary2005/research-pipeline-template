@@ -99,7 +99,23 @@ arXiv API                    GitHub Actions (daily / on-demand)
 | `site.url` | Full GitHub Pages URL | `https://YOUR_USERNAME.github.io` |
 | `site.baseurl` | Repo path prefix | `"/YOUR_REPO_NAME"` |
 | `llm.backend` | LLM for summaries: `deepseek`, `claude`, or `openai` | `deepseek` |
+| `llm.model.<backend>` | Override default model per backend (optional) | see below |
 | `tts.backend` | TTS for audio: `edge` or `openai` | `edge` |
+| `tts.edge.voice` | Edge TTS voice name | `zh-CN-XiaoxiaoNeural` |
+| `tts.edge.rate` | Edge TTS speech rate | `-5%` |
+| `tts.openai.model` | OpenAI TTS model | `tts-1-hd` |
+| `tts.openai.voice` | OpenAI TTS voice | `nova` |
+| `tts.openai.speed` | OpenAI TTS speed (0.25–4.0) | `0.95` |
+
+**Default models per LLM backend:**
+
+| Backend | Default model |
+|---------|---------------|
+| `claude` | `claude-sonnet-4-6` |
+| `openai` | `gpt-4o` |
+| `deepseek` | `deepseek-chat` |
+
+Override them under `llm.model` in settings.yaml (see `config/settings.example.yaml`).
 
 ### `config/topics.yaml`
 
