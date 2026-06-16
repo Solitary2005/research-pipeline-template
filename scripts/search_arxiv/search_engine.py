@@ -63,8 +63,9 @@ class ArxivSearchEngine:
             sort_by=arxiv.SortCriterion.SubmittedDate,
         )
 
+        client = arxiv.Client()
         papers = []
-        for result in search.results():
+        for result in client.results(search):
             info = self._to_paper_info(result, topic_cfg.name)
             papers.append(info)
 

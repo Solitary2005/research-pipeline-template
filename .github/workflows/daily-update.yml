@@ -32,7 +32,8 @@ jobs:
         run: |
           git config user.name "research-pipeline-bot"
           git config user.email "bot@research-pipeline.local"
-          git add _papers/ data/papers_index.json index.md config/topics.yaml
+          # Use --ignore-errors to handle empty _papers/ directory on first run
+          git add _papers/ data/papers_index.json index.md config/topics.yaml --ignore-errors 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "daily update: sync papers from arxiv [skip ci]"
             git push

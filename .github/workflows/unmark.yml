@@ -48,7 +48,8 @@ jobs:
         run: |
           git config user.name "research-pipeline-bot"
           git config user.email "bot@research-pipeline.local"
-          git add data/papers_index.json _papers/ _podcasts/ _data/summaries/ assets/audio/ _uploads/ index.md
+          # Use --ignore-errors to handle empty directories
+          git add data/papers_index.json _papers/ _podcasts/ _data/summaries/ assets/audio/ _uploads/ index.md --ignore-errors 2>/dev/null || true
           if ! git diff --quiet --cached; then
             git commit -m "unmark ${{ steps.parse.outputs.paper_id }} from favorites [skip ci]"
             git push
