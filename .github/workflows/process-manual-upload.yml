@@ -191,7 +191,8 @@ jobs:
         run: |
           git config user.name "research-pipeline-bot"
           git config user.email "bot@research-pipeline.local"
-          git add _podcasts/ assets/audio/ _data/summaries/ data/papers_index.json _papers/ index.md _uploads/
+          # Use --ignore-errors to handle empty directories
+          git add _podcasts/ assets/audio/ _data/summaries/ data/papers_index.json _papers/ index.md _uploads/ --ignore-errors 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "manual upload: ${{ steps.prepare.outputs.paper_id }} [skip ci]"
             git push
